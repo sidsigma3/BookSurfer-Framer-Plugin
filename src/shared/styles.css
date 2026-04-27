@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+:root {
+  --font-sans: "Sora", system-ui, -apple-system, sans-serif;
+  --primary: #003428;
+  --accent: #B1EE31;
+  --foreground: #000000;
+  --background: #F7F7F7;
+  --secondary: #F0F0F0;
+}
+
+@theme {
+  --font-sans: var(--font-sans);
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-secondary: var(--secondary);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ccc;
+}
+
+.premium-card {
+  background: white;
+  border: 1px solid var(--secondary);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.premium-card:hover {
+  border-color: var(--foreground);
+  transform: translateY(-1px);
+}
+
+.premium-input {
+  background: var(--secondary);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.premium-input:focus {
+  background: white;
+  border-color: var(--foreground);
+  outline: none;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--accent);
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--foreground);
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-accent:hover {
+  opacity: 0.9;
+  transform: scale(0.98);
+}

@@ -1,0 +1,10 @@
+{
+    "id": "booksf",
+    "name": "BookSurfer Booking Forms",
+    "description": "Smart booking forms for classes and sessions.",
+    "author": "BookSurfer",
+    "version": "1.0.0",
+    "icon": "./public/icon.png",
+    "uiEntry": "index.html",
+    "modes": ["canvas"]
+}
