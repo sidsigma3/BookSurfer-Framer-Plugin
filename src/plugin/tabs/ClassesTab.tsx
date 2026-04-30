@@ -3,61 +3,72 @@ import { useClasses, ClassInfo } from "../../hooks/useClasses"
 import { Calendar, CreditCard, Search, PlusCircle, Info, MapPin, User, GripVertical, CheckCircle, ShieldAlert } from "lucide-react"
 import { toast } from "sonner"
 import { framer, useMakeDraggable } from "framer-plugin"
+import LayoutSelector from "../components/LayoutSelector"
 
 // ✅ Resolution: The URL is now managed via environment variables
 const COMPONENT_URL = import.meta.env.VITE_BOOKING_COMPONENT_URL as string
 
-const buildAttributes = (cls: ClassInfo) => ({
-    controls: {
-        embedUrl: cls.embed_url,
-        classId: String(cls.id),
-        className: cls.name,
-        location: cls.location ?? "",
-    },
-    width: 480,
-    height: 720,
-})
+type LayoutStyle = "classic" | "modern" | "minimal" | "compact"
 
-const ClassItem: React.FC<{ classItem: ClassInfo; canAdd: boolean }> = ({ classItem, canAdd }) => {
+const LAYOUT_CONFIG: Record<LayoutStyle, { width: number; height: number }> = {
+    classic:  { width: 480, height: 720 },
+    modern:   { width: 520, height: 680 },
+    minimal:  { width: 400, height: 500 },
+    compact:  { width: 360, height: 400 },
+}
+
+const buildAttributes = (cls: ClassInfo, style: LayoutStyle = "classic") => {
+    let finalEmbedUrl = cls.embed_url
+    if (finalEmbedUrl) {
+        try {
+            const url = new URL(finalEmbedUrl)
+            url.searchParams.set("layout", style)
+            finalEmbedUrl = url.toString()
+        } catch {
+            const separator = finalEmbedUrl.includes("?") ? "&" : "?"
+            finalEmbedUrl = `${finalEmbedUrl}${separator}layout=${style}`
+        }
+    }
+
+    const { width, height } = LAYOUT_CONFIG[style]
+
+    return {
+        controls: {
+            embedUrl: finalEmbedUrl,
+            classId: String(cls.id),
+            className: cls.name,
+            location: cls.location ?? "",
+            layoutStyle: style,
+        },
+        width: `${width}px`,
+        height: `${height}px`,
+    }
+}
+
+const ClassItem: React.FC<{ classItem: ClassInfo; canAdd: boolean; onInitiateAdd: (cls: ClassInfo) => void }> = ({ classItem, canAdd, onInitiateAdd }) => {
     const dragRef = useRef<HTMLDivElement>(null!)
 
     // Drag and Drop implementation for the hosted component
-    useMakeDraggable(dragRef, (() => {
+    useMakeDraggable(dragRef, () => {
         if (!canAdd || !COMPONENT_URL) return null
         
         return {
             type: "componentInstance",
             url: COMPONENT_URL,
-            attributes: buildAttributes(classItem),
+            attributes: buildAttributes(classItem, "classic"),
         }
-    }) as any)
+    })
 
-    const handleAdd = async () => {
-        try {
-            if (!classItem.embed_url?.startsWith("http")) {
-                toast.error("Class is missing a valid embed URL")
-                return
-            }
-            if (!COMPONENT_URL) {
-                toast.error("Booking component URL not configured in .env.local")
-                return
-            }
-            if (!canAdd) {
-                toast.error("Permission denied. See banner.")
-                return
-            }
-
-            console.log("Adding component with size attributes:", COMPONENT_URL)
-            
-            await framer.addComponentInstance({
-                url: COMPONENT_URL,
-                attributes: buildAttributes(classItem),
-            })
-            toast.success(`Added "${classItem.name}" to canvas`)
-        } catch (err: any) {
-            console.error("Add failed:", err)
-            toast.error(err?.message ?? "Could not add to canvas")
+    const handleAddClick = () => {
+        if (!canAdd) {
+            toast.error("Permission denied. See banner.")
+            return
         }
+        if (!COMPONENT_URL) {
+            toast.error("Booking component URL not configured in .env.local")
+            return
+        }
+        onInitiateAdd(classItem)
     }
 
     return (
@@ -69,21 +80,25 @@ const ClassItem: React.FC<{ classItem: ClassInfo; canAdd: boolean }> = ({ classI
             <div className="absolute right-0 top-0 w-1 h-full bg-accent opacity-0 group-hover:opacity-100 transition-opacity" />
             
             <div className="flex justify-between items-start">
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                        {canAdd && COMPONENT_URL && <GripVertical size={14} className="text-gray-300 group-hover:text-primary transition-colors" />}
-                        <h3 className="font-bold text-[14px] text-primary group-hover:text-black transition-colors">
+                <div className="flex items-start gap-2">
+                    {canAdd && COMPONENT_URL && (
+                        <div className="flex items-center h-[21px] shrink-0">
+                            <GripVertical size={14} className="text-gray-300 group-hover:text-primary transition-colors" />
+                        </div>
+                    )}
+                    <div className="flex flex-col gap-1">
+                        <h3 className="font-bold text-[14px] leading-[21px] text-primary group-hover:text-black transition-colors">
                             {classItem.name}
                         </h3>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-accent bg-primary px-2 py-0.5 rounded-full w-fit uppercase tracking-wider">
-                        {classItem.class_type}
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-accent bg-primary px-2 py-0.5 rounded-full w-fit uppercase tracking-wider">
+                            {classItem.class_type}
+                        </div>
                     </div>
                 </div>
                 <button 
                     onClick={(e) => {
                         e.stopPropagation()
-                        handleAdd()
+                        handleAddClick()
                     }}
                     disabled={!canAdd || !COMPONENT_URL}
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm z-10
@@ -115,6 +130,7 @@ const ClassesTab: React.FC = () => {
     const { classes, loading, error, refresh } = useClasses()
     const [searchQuery, setSearchQuery] = useState("")
     const [canAdd, setCanAdd] = useState(framer.isAllowedTo("addComponentInstance"))
+    const [selectedClassForStyle, setSelectedClassForStyle] = useState<ClassInfo | null>(null)
 
     useEffect(() => {
         return framer.subscribeToIsAllowedTo("addComponentInstance", (allowed) => {
@@ -159,6 +175,43 @@ const ClassesTab: React.FC = () => {
                     Retry
                 </button>
             </div>
+        )
+    }
+
+    const handleSelectStyle = async (styleId: any) => {
+        if (!selectedClassForStyle) return
+
+        try {
+            if (!selectedClassForStyle.embed_url?.startsWith("http")) {
+                toast.error("Class is missing a valid embed URL")
+                return
+            }
+            if (!COMPONENT_URL) {
+                toast.error("Booking component URL not configured in .env.local")
+                return
+            }
+
+            console.log(`Adding component with style ${styleId}:`, COMPONENT_URL)
+            
+            await framer.addComponentInstance({
+                url: COMPONENT_URL,
+                attributes: buildAttributes(selectedClassForStyle, styleId as LayoutStyle),
+            })
+            toast.success(`Added "${selectedClassForStyle.name}" with ${styleId} style`)
+            setSelectedClassForStyle(null)
+        } catch (err: any) {
+            console.error("Add failed:", err)
+            toast.error(err?.message ?? "Could not add to canvas")
+        }
+    }
+
+    if (selectedClassForStyle) {
+        return (
+            <LayoutSelector 
+                classItem={selectedClassForStyle} 
+                onSelect={handleSelectStyle}
+                onBack={() => setSelectedClassForStyle(null)}
+            />
         )
     }
 
@@ -213,7 +266,12 @@ const ClassesTab: React.FC = () => {
                 ) : (
                     <div className="grid gap-3">
                         {filteredClasses.map((classItem) => (
-                            <ClassItem key={classItem.id} classItem={classItem} canAdd={canAdd} />
+                            <ClassItem 
+                                key={classItem.id} 
+                                classItem={classItem} 
+                                canAdd={canAdd} 
+                                onInitiateAdd={setSelectedClassForStyle}
+                            />
                         ))}
                     </div>
                 )}
