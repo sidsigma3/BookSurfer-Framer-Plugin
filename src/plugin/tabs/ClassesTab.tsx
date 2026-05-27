@@ -53,7 +53,7 @@ const ClassItem: React.FC<{ classItem: ClassInfo; canAdd: boolean; onInitiateAdd
     // Drag and Drop implementation for the hosted component.
     // useMakeDraggable requires a non-null DragData return, so we always return
     // a valid object. When conditions aren't met we fall back to a no-op SVG.
-    useMakeDraggable(dragRef, (): import("framer-plugin").DragData => {
+    useMakeDraggable(dragRef, () => {
         if (!canAdd || !COMPONENT_URL) {
             return {
                 type: "svg",
