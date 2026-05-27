@@ -17,7 +17,7 @@ const LAYOUT_CONFIG: Record<LayoutStyle, { width: number; height: number }> = {
     compact:  { width: 360, height: 400 },
 }
 
-const buildAttributes = (cls: ClassInfo, style: LayoutStyle = "classic") => {
+const buildAttributes = (cls: ClassInfo, style: LayoutStyle = "classic"): Partial<Record<string, unknown>> => {
     let finalEmbedUrl = cls.embed_url
     if (finalEmbedUrl) {
         try {
@@ -32,6 +32,8 @@ const buildAttributes = (cls: ClassInfo, style: LayoutStyle = "classic") => {
 
     const { width, height } = LAYOUT_CONFIG[style]
 
+    // width/height are passed as component props inside controls,
+    // not as top-level EditableComponentInstanceNodeAttributes to avoid type conflicts.
     return {
         controls: {
             embedUrl: finalEmbedUrl,
@@ -39,19 +41,25 @@ const buildAttributes = (cls: ClassInfo, style: LayoutStyle = "classic") => {
             className: cls.name,
             location: cls.location ?? "",
             layoutStyle: style,
+            width: `${width}px`,
+            height: `${height}px`,
         },
-        width: `${width}px`,
-        height: `${height}px`,
     }
 }
 
 const ClassItem: React.FC<{ classItem: ClassInfo; canAdd: boolean; onInitiateAdd: (cls: ClassInfo) => void }> = ({ classItem, canAdd, onInitiateAdd }) => {
     const dragRef = useRef<HTMLDivElement>(null!)
 
-    // Drag and Drop implementation for the hosted component
-    useMakeDraggable(dragRef, () => {
-        if (!canAdd || !COMPONENT_URL) return null
-        
+    // Drag and Drop implementation for the hosted component.
+    // useMakeDraggable requires a non-null DragData return, so we always return
+    // a valid object. When conditions aren't met we fall back to a no-op SVG.
+    useMakeDraggable(dragRef, (): import("framer-plugin").DragData => {
+        if (!canAdd || !COMPONENT_URL) {
+            return {
+                type: "svg",
+                svg: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1\" height=\"1\"></svg>",
+            }
+        }
         return {
             type: "componentInstance",
             url: COMPONENT_URL,
