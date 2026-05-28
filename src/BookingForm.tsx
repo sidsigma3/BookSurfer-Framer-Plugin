@@ -1,32 +1,29 @@
-import { addPropertyControls, ControlType } from "framer"
+import React from "react"
 
 interface Props {
-    embedUrl: string
-    layoutStyle: "classic" | "modern" | "minimal" | "compact"
+    embedUrl?: string
+    layoutStyle?: string
     style?: React.CSSProperties
 }
 
 export function BookingForm({ embedUrl, style }: Props) {
     if (!embedUrl) {
         return (
-            <div
-                style={{
-                    ...style,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#f5f5f5",
-                    borderRadius: 8,
-                    color: "#aaa",
-                    fontSize: 13,
-                    fontFamily: "sans-serif",
-                }}
-            >
+            <div style={{
+                ...style,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#f5f5f5",
+                borderRadius: 8,
+                color: "#aaa",
+                fontSize: 13,
+                fontFamily: "sans-serif",
+            }}>
                 No booking URL configured
             </div>
         )
     }
-
     return (
         <iframe
             src={embedUrl}
@@ -35,19 +32,5 @@ export function BookingForm({ embedUrl, style }: Props) {
         />
     )
 }
-
-addPropertyControls(BookingForm, {
-    embedUrl: {
-        type: ControlType.String,
-        title: "Embed URL",
-        defaultValue: "",
-    },
-    layoutStyle: {
-        type: ControlType.Enum,
-        title: "Layout",
-        options: ["classic", "modern", "minimal", "compact"],
-        defaultValue: "classic",
-    },
-})
 
 export default BookingForm

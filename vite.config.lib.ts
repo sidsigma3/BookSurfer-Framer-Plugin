@@ -13,9 +13,6 @@ export default defineConfig({
         },
         outDir: "dist",
         emptyOutDir: false,
-        rollupOptions: {
-            // framer and react are provided by Framer at runtime
-            external: ["react", "react-dom", "framer"],
-        },
+        rollupOptions: {},
     },
 })
