@@ -1,8 +1,8 @@
-import React from "react"
+import { addPropertyControls, ControlType } from "framer"
 
 interface Props {
-    embedUrl?: string
-    layoutStyle?: string
+    embedUrl: string
+    layoutStyle: "classic" | "modern" | "minimal" | "compact"
     style?: React.CSSProperties
 }
 
@@ -32,5 +32,19 @@ export function BookingForm({ embedUrl, style }: Props) {
         />
     )
 }
+
+addPropertyControls(BookingForm, {
+    embedUrl: {
+        type: ControlType.String,
+        title: "Embed URL",
+        defaultValue: "",
+    },
+    layoutStyle: {
+        type: ControlType.Enum,
+        title: "Layout",
+        options: ["classic", "modern", "minimal", "compact"],
+        defaultValue: "classic",
+    },
+})
 
 export default BookingForm

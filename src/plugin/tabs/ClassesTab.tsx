@@ -5,7 +5,6 @@ import { toast } from "sonner"
 import { framer, useMakeDraggable } from "framer-plugin"
 import LayoutSelector from "../components/LayoutSelector"
 
-// ✅ Resolution: The URL is now managed via environment variables
 const COMPONENT_URL = import.meta.env.VITE_BOOKING_COMPONENT_URL as string
 
 type LayoutStyle = "classic" | "modern" | "minimal" | "compact"
@@ -17,39 +16,24 @@ const LAYOUT_CONFIG: Record<LayoutStyle, { width: number; height: number }> = {
     compact:  { width: 360, height: 400 },
 }
 
-const buildAttributes = (cls: ClassInfo, style: LayoutStyle = "classic"): Partial<Record<string, unknown>> => {
-    let finalEmbedUrl = cls.embed_url
-    if (finalEmbedUrl) {
-        try {
-            const url = new URL(finalEmbedUrl)
-            url.searchParams.set("layout", style)
-            finalEmbedUrl = url.toString()
-        } catch {
-            const separator = finalEmbedUrl.includes("?") ? "&" : "?"
-            finalEmbedUrl = `${finalEmbedUrl}${separator}layout=${style}`
-        }
-    }
-
-    const { width, height } = LAYOUT_CONFIG[style]
-
-    return {
-        width,
-        height,
-        controls: {
-            embedUrl: finalEmbedUrl ?? "",
-            layoutStyle: style,
-        },
+const getEmbedUrl = (cls: ClassInfo, style: LayoutStyle = "classic"): string => {
+    const base = cls.embed_url
+    if (!base) return ""
+    try {
+        const url = new URL(base)
+        url.searchParams.set("layout", style)
+        return url.toString()
+    } catch {
+        const sep = base.includes("?") ? "&" : "?"
+        return `${base}${sep}layout=${style}`
     }
 }
 
 const ClassItem: React.FC<{ classItem: ClassInfo; canAdd: boolean; onInitiateAdd: (cls: ClassInfo) => void }> = ({ classItem, canAdd, onInitiateAdd }) => {
     const dragRef = useRef<HTMLDivElement>(null!)
 
-    // Drag and Drop implementation for the hosted component.
-    // useMakeDraggable requires a non-null DragData return, so we always return
-    // a valid object. When conditions aren't met we fall back to a no-op SVG.
     useMakeDraggable(dragRef, () => {
-        if (!canAdd || !COMPONENT_URL) {
+        if (!canAdd || !COMPONENT_URL || !classItem.embed_url) {
             return {
                 type: "svg",
                 svg: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1\" height=\"1\"></svg>",
@@ -58,33 +42,31 @@ const ClassItem: React.FC<{ classItem: ClassInfo; canAdd: boolean; onInitiateAdd
         return {
             type: "componentInstance",
             url: COMPONENT_URL,
-            attributes: buildAttributes(classItem, "classic"),
+            attributes: {
+                width: `${LAYOUT_CONFIG.classic.width}px`,
+                height: `${LAYOUT_CONFIG.classic.height}px`,
+                controls: { embedUrl: getEmbedUrl(classItem, "classic"), layoutStyle: "classic" },
+            },
         }
     })
 
     const handleAddClick = () => {
-        if (!canAdd) {
-            toast.error("Permission denied. See banner.")
-            return
-        }
-        if (!COMPONENT_URL) {
-            toast.error("Booking component URL not configured in .env.local")
-            return
-        }
+        if (!canAdd) { toast.error("Permission denied. See banner."); return }
+        if (!classItem.embed_url) { toast.error("This class has no booking URL."); return }
         onInitiateAdd(classItem)
     }
 
     return (
         <div
             ref={dragRef}
-            className={`premium-card flex flex-col gap-3 p-5 text-left group relative overflow-hidden bg-white transition-all shadow-sm 
-                ${canAdd && COMPONENT_URL ? 'cursor-grab active:cursor-grabbing hover:shadow-md hover:border-primary/50' : 'opacity-80'}`}
+            className={`premium-card flex flex-col gap-3 p-5 text-left group relative overflow-hidden bg-white transition-all shadow-sm
+                ${canAdd && classItem.embed_url ? 'cursor-grab active:cursor-grabbing hover:shadow-md hover:border-primary/50' : 'opacity-80'}`}
         >
             <div className="absolute right-0 top-0 w-1 h-full bg-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-            
+
             <div className="flex justify-between items-start">
                 <div className="flex items-start gap-2">
-                    {canAdd && COMPONENT_URL && (
+                    {canAdd && classItem.embed_url && (
                         <div className="flex items-center h-[21px] shrink-0">
                             <GripVertical size={14} className="text-gray-300 group-hover:text-primary transition-colors" />
                         </div>
@@ -98,14 +80,11 @@ const ClassItem: React.FC<{ classItem: ClassInfo; canAdd: boolean; onInitiateAdd
                         </div>
                     </div>
                 </div>
-                <button 
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        handleAddClick()
-                    }}
-                    disabled={!canAdd || !COMPONENT_URL}
+                <button
+                    onClick={(e) => { e.stopPropagation(); handleAddClick() }}
+                    disabled={!canAdd || !classItem.embed_url}
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm z-10
-                        ${canAdd && COMPONENT_URL ? 'bg-secondary text-primary hover:bg-accent hover:text-foreground' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                        ${canAdd && classItem.embed_url ? 'bg-secondary text-primary hover:bg-accent hover:text-foreground' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
                 >
                     <PlusCircle size={18} />
                 </button>
@@ -181,37 +160,37 @@ const ClassesTab: React.FC = () => {
         )
     }
 
-    const handleSelectStyle = async (styleId: any) => {
+    const handleSelectStyle = async (styleId: string) => {
         if (!selectedClassForStyle) return
+        const style = styleId as LayoutStyle
+        const embedUrl = getEmbedUrl(selectedClassForStyle, style)
+
+        if (!embedUrl.startsWith("http")) {
+            toast.error("Class is missing a valid booking URL")
+            return
+        }
 
         try {
-            if (!selectedClassForStyle.embed_url?.startsWith("http")) {
-                toast.error("Class is missing a valid embed URL")
-                return
-            }
-            if (!COMPONENT_URL) {
-                toast.error("Booking component URL not configured in .env.local")
-                return
-            }
-
-            console.log(`Adding component with style ${styleId}:`, COMPONENT_URL)
-            
+            const { width, height } = LAYOUT_CONFIG[style]
             await framer.addComponentInstance({
                 url: COMPONENT_URL,
-                attributes: buildAttributes(selectedClassForStyle, styleId as LayoutStyle),
+                attributes: {
+                    width: `${width}px`,
+                    height: `${height}px`,
+                    controls: { embedUrl, layoutStyle: style },
+                },
             })
-            toast.success(`Added "${selectedClassForStyle.name}" with ${styleId} style`)
+            toast.success(`Added "${selectedClassForStyle.name}" to canvas`)
             setSelectedClassForStyle(null)
         } catch (err: any) {
-            console.error("Add failed:", err)
             toast.error(err?.message ?? "Could not add to canvas")
         }
     }
 
     if (selectedClassForStyle) {
         return (
-            <LayoutSelector 
-                classItem={selectedClassForStyle} 
+            <LayoutSelector
+                classItem={selectedClassForStyle}
                 onSelect={handleSelectStyle}
                 onBack={() => setSelectedClassForStyle(null)}
             />
@@ -229,19 +208,10 @@ const ClassesTab: React.FC = () => {
                 </div>
             )}
 
-            {!COMPONENT_URL && (
-                <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-100 rounded-[16px] text-blue-800">
-                    <Info size={20} className="shrink-0" />
-                    <p className="text-[11px] font-medium leading-relaxed">
-                        Please set VITE_BOOKING_COMPONENT_URL in .env.local to enable insertion.
-                    </p>
-                </div>
-            )}
-
             <div className="flex justify-between items-end">
                 <div className="flex flex-col gap-2">
                     <h2 className="text-[18px] font-bold text-primary">Your Classes</h2>
-                    <p className="text-gray-500 text-[12px]">Drag or click to add forms.</p>
+                    <p className="text-gray-500 text-[12px]">Drag or click to add booking forms.</p>
                 </div>
                 <button onClick={testStatus} className="flex items-center gap-1.5 text-[10px] text-primary/60 hover:text-primary transition-colors font-bold uppercase tracking-wider">
                     <CheckCircle size={12} />
@@ -249,7 +219,7 @@ const ClassesTab: React.FC = () => {
                 </button>
             </div>
 
-            <div className="relative group ">
+            <div className="relative group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={14} />
                 <input
                     type="text"
@@ -269,10 +239,10 @@ const ClassesTab: React.FC = () => {
                 ) : (
                     <div className="grid gap-3">
                         {filteredClasses.map((classItem) => (
-                            <ClassItem 
-                                key={classItem.id} 
-                                classItem={classItem} 
-                                canAdd={canAdd} 
+                            <ClassItem
+                                key={classItem.id}
+                                classItem={classItem}
+                                canAdd={canAdd}
                                 onInitiateAdd={setSelectedClassForStyle}
                             />
                         ))}
