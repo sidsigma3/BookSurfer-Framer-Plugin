@@ -11,7 +11,8 @@ export default defineConfig({
             fileName: "BookingForm",
             formats: ["es"],
         },
-        outDir: "dist-component",
+        outDir: "dist",
+        emptyOutDir: false,
         rollupOptions: {
             // framer and react are provided by Framer at runtime
             external: ["react", "react-dom", "framer"],
