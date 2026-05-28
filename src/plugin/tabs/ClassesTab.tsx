@@ -32,17 +32,12 @@ const buildAttributes = (cls: ClassInfo, style: LayoutStyle = "classic"): Partia
 
     const { width, height } = LAYOUT_CONFIG[style]
 
-    // width/height are passed as component props inside controls,
-    // not as top-level EditableComponentInstanceNodeAttributes to avoid type conflicts.
     return {
+        width,
+        height,
         controls: {
-            embedUrl: finalEmbedUrl,
-            classId: String(cls.id),
-            className: cls.name,
-            location: cls.location ?? "",
+            embedUrl: finalEmbedUrl ?? "",
             layoutStyle: style,
-            width: `${width}px`,
-            height: `${height}px`,
         },
     }
 }

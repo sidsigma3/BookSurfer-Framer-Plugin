@@ -100,7 +100,7 @@ const ConnectTab: React.FC<ConnectTabProps> = ({ onConnected }) => {
                 </button>
                 
                 <a 
-                    href="https://admin.booksurfer.com/settings" 
+                    href="https://admin.booksurfer.in/settings" 
                     target="_blank" 
                     rel="noreferrer"
                     className="flex items-center justify-center gap-2 text-[11px] font-bold text-primary/40 hover:text-primary transition-colors py-2 uppercase tracking-wider"

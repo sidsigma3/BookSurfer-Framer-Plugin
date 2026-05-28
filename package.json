@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:component": "vite build --config vite.config.lib.ts",
     "preview": "vite preview",
     "pack": "framer-plugin-tools pack"
   },
