@@ -45,7 +45,7 @@ const ClassItem: React.FC<{ classItem: ClassInfo; canAdd: boolean; onInitiateAdd
             attributes: {
                 width: `${LAYOUT_CONFIG.classic.width}px`,
                 height: `${LAYOUT_CONFIG.classic.height}px`,
-                controls: { embedUrl: getEmbedUrl(classItem, "classic"), layoutStyle: "classic" },
+                controls: { embedUrl: getEmbedUrl(classItem, "classic") },
             },
         }
     })
@@ -177,7 +177,7 @@ const ClassesTab: React.FC = () => {
                 attributes: {
                     width: `${width}px`,
                     height: `${height}px`,
-                    controls: { embedUrl, layoutStyle: style },
+                    controls: { embedUrl },
                 },
             })
             toast.success(`Added "${selectedClassForStyle.name}" to canvas`)

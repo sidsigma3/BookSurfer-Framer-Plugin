@@ -2,7 +2,6 @@ import { addPropertyControls, ControlType } from "framer"
 
 interface Props {
     embedUrl: string
-    layoutStyle: "classic" | "modern" | "minimal" | "compact"
     style?: React.CSSProperties
 }
 
@@ -38,12 +37,6 @@ addPropertyControls(BookingForm, {
         type: ControlType.String,
         title: "Embed URL",
         defaultValue: "",
-    },
-    layoutStyle: {
-        type: ControlType.Enum,
-        title: "Layout",
-        options: ["classic", "modern", "minimal", "compact"],
-        defaultValue: "classic",
     },
 })
 
