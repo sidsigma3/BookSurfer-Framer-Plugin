@@ -164,6 +164,9 @@ const ClassesTab: React.FC = () => {
         if (!selectedClassForStyle) return
         const style = styleId as LayoutStyle
         const embedUrl = getEmbedUrl(selectedClassForStyle, style)
+        const className = selectedClassForStyle.name
+
+        setSelectedClassForStyle(null)
 
         if (!embedUrl.startsWith("http")) {
             toast.error("Class is missing a valid booking URL")
@@ -180,8 +183,7 @@ const ClassesTab: React.FC = () => {
                     controls: { embedUrl },
                 },
             })
-            toast.success(`Added "${selectedClassForStyle.name}" to canvas`)
-            setSelectedClassForStyle(null)
+            toast.success(`Added "${className}" to canvas`)
         } catch (err: any) {
             toast.error(err?.message ?? "Could not add to canvas")
         }
