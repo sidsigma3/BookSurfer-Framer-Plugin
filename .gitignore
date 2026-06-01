@@ -26,3 +26,5 @@ dist-ssr
 # Framer
 .framer
 canvas.js
+
+plugin.zip

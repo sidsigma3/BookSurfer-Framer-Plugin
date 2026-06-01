@@ -1,7 +1,7 @@
 {
-    "id": "booksf",
+    "id": "booksurfer-booking-forms",
     "name": "BookSurfer Booking Forms",
-    "description": "Smart booking forms for classes and sessions.",
+    "description": "Add live booking forms for your classes and sessions directly onto the Framer canvas. Connect your BookSurfer account, browse your classes, and drag or insert a fully functional booking form in seconds. Requires a BookSurfer account.",
     "author": "BookSurfer",
     "version": "1.0.0",
     "icon": "./public/icon.png",
